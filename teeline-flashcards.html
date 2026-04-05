@@ -412,6 +412,97 @@
     letter-spacing: 0.5em;
     margin: 1rem 0;
   }
+
+  /* Keyboard shortcuts bar */
+  .shortcuts-bar {
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .shortcut {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 0.78rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    border-radius: 3px;
+    color: var(--accent);
+    line-height: 1.4;
+  }
+
+  /* Missed words summary */
+  .missed-section {
+    margin-top: 1.5rem;
+    text-align: left;
+  }
+
+  .missed-title {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .missed-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .missed-card {
+    background: var(--wrong-bg);
+    border: 1px solid #e0c0c0;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 90px;
+  }
+
+  .missed-card img {
+    max-width: 70px;
+    max-height: 50px;
+    object-fit: contain;
+  }
+
+  .missed-word {
+    font-size: 0.85rem;
+    color: var(--wrong-light);
+    font-style: italic;
+  }
+
+  .all-correct-msg {
+    text-align: center;
+    color: var(--correct-light);
+    font-style: italic;
+    font-size: 1rem;
+    padding: 1rem;
+    background: var(--correct-bg);
+    border: 1px solid var(--correct);
+    border-radius: 6px;
+  }
 </style>
 </head>
 <body>
@@ -441,6 +532,14 @@
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 
   <div style="height:1.5rem"></div>
+
+  <!-- Keyboard shortcuts -->
+  <div class="shortcuts-bar">
+    <div class="shortcut"><kbd>Space</kbd> or <kbd>Enter</kbd> Reveal</div>
+    <div class="shortcut"><kbd>→</kbd> Got it</div>
+    <div class="shortcut"><kbd>←</kbd> Missed it</div>
+    <div class="shortcut"><kbd>1</kbd> Teeline→English &nbsp; <kbd>2</kbd> English→Teeline</div>
+  </div>
 
   <!-- Main card -->
   <div class="card-wrap" id="card-wrap">
@@ -479,6 +578,7 @@
     <p style="color:var(--text-dim);font-style:italic;font-size:1rem;">Round complete</p>
     <div class="final-score" id="final-score">0/6</div>
     <p class="final-label" id="final-label">Keep practising!</p>
+    <div class="missed-section" id="missed-section"></div>
     <div class="ornament">✦ ✦ ✦</div>
     <button class="btn-restart" onclick="restart()">Shuffle &amp; Restart</button>
   </div>
@@ -503,12 +603,13 @@ function imgUrl(id) {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let mode = 'read'; // 'read' = show Teeline, guess English | 'write' = show English, recall Teeline
+let mode = 'read';
 let deck = [];
 let current = 0;
 let correct = 0;
 let wrong = 0;
 let revealed = false;
+let missedWords = []; // tracks cards marked wrong
 
 // ── Shuffle ───────────────────────────────────────────────────────────────────
 function shuffle(arr) {
@@ -615,7 +716,10 @@ function reveal() {
 // ── Mark ──────────────────────────────────────────────────────────────────────
 function mark(isCorrect) {
   if (isCorrect) correct++;
-  else wrong++;
+  else {
+    wrong++;
+    missedWords.push(deck[current]);
+  }
 
   updateScore();
 
@@ -654,6 +758,24 @@ function showComplete() {
   else if (pct >= 60) label = 'Good effort — keep practising!';
   else label = 'Keep at it — it will come!';
   document.getElementById('final-label').textContent = label;
+
+  // Build missed words summary
+  const missedSection = document.getElementById('missed-section');
+  if (missedWords.length === 0) {
+    missedSection.innerHTML = `<div class="all-correct-msg">✓ You got every word — excellent round!</div>`;
+  } else {
+    const cards = missedWords.map(card => `
+      <div class="missed-card">
+        <img src="${imgUrl(card.id)}" alt="${card.word}"
+          onerror="this.style.display='none'">
+        <span class="missed-word">${card.word}</span>
+      </div>
+    `).join('');
+    missedSection.innerHTML = `
+      <p class="missed-title">Words to focus on</p>
+      <div class="missed-grid">${cards}</div>
+    `;
+  }
 }
 
 // ── Restart ───────────────────────────────────────────────────────────────────
@@ -662,18 +784,37 @@ function restart() {
   current = 0;
   correct = 0;
   wrong = 0;
+  missedWords = [];
 
   document.getElementById('card-wrap').style.display = 'block';
   document.getElementById('answer-area').style.display = 'block';
   document.getElementById('deck-complete').classList.remove('show');
+  document.getElementById('missed-section').innerHTML = '';
 
   updateScore();
   renderCard();
 }
 
-// ── Enter key submits ─────────────────────────────────────────────────────────
-document.getElementById('answer-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') reveal();
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Don't fire shortcuts when typing in the input
+  if (document.activeElement === document.getElementById('answer-input')) {
+    if (e.key === 'Enter') reveal();
+    return;
+  }
+
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    reveal();
+  } else if (e.key === 'ArrowRight') {
+    if (revealed) mark(true);
+  } else if (e.key === 'ArrowLeft') {
+    if (revealed) mark(false);
+  } else if (e.key === '1') {
+    setMode('read');
+  } else if (e.key === '2') {
+    setMode('write');
+  }
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teeline Word Cloud</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --paper-dark: #ede6d6;
+    --sepia: #8b6f47;
+    --sepia-light: #c4a882;
+    --accent: #5c3d1e;
+    --accent-bright: #b5541a;
+    --has-outline: #2d5a27;
+    --no-outline: #8b7355;
+    --shadow: rgba(26,18,8,0.12);
+  }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Aged paper texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(139,111,71,0.08) 27px,
+        rgba(139,111,71,0.08) 28px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--sepia-light);
+    position: relative;
+  }
+
+  header::after {
+    content: '✦ ✦ ✦';
+    display: block;
+    color: var(--sepia-light);
+    font-size: 0.75rem;
+    letter-spacing: 0.5em;
+    position: absolute;
+    bottom: -0.6em;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--paper);
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 400;
+    color: var(--accent);
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: var(--sepia);
+    font-style: italic;
+    letter-spacing: 0.02em;
+  }
+
+  /* Input area */
+  .input-panel {
+    background: white;
+    border: 1px solid var(--sepia-light);
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .input-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--sepia);
+    margin-bottom: 0.6rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid var(--paper-dark);
+    border-radius: 3px;
+    padding: 0.75rem;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--paper);
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--sepia);
+    background: white;
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 0.95rem;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-bright);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(92,61,30,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--sepia);
+    border: 1px solid var(--sepia-light);
+  }
+
+  .btn-secondary:hover {
+    background: var(--paper-dark);
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: var(--sepia);
+    font-style: italic;
+    margin-left: auto;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: var(--sepia);
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* Word Cloud */
+  .cloud-panel {
+    background: white;
+    border: 1px solid var(--sepia-light);
+    border-radius: 4px;
+    padding: 2rem;
+    min-height: 280px;
+    box-shadow: 0 2px 8px var(--shadow);
+    position: relative;
+  }
+
+  .cloud-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--sepia-light);
+    gap: 0.75rem;
+  }
+
+  .cloud-empty svg {
+    opacity: 0.4;
+  }
+
+  .cloud-empty p {
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+
+  #word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+
+  .word-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 400;
+    line-height: 1;
+    user-select: none;
+    border: 1px solid transparent;
+  }
+
+  .word-chip.has-outline {
+    color: var(--has-outline);
+    border-color: rgba(45, 90, 39, 0.2);
+  }
+
+  .word-chip.no-outline {
+    color: var(--no-outline);
+    border-color: transparent;
+  }
+
+  .word-chip:hover {
+    transform: scale(1.08) translateY(-2px);
+    z-index: 10;
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+
+  .word-chip.has-outline:hover {
+    background: rgba(45, 90, 39, 0.06);
+    border-color: rgba(45, 90, 39, 0.4);
+  }
+
+  .word-chip.no-outline:hover {
+    background: var(--paper);
+    border-color: var(--sepia-light);
+  }
+
+  /* Frequency badge */
+  .freq-badge {
+    font-size: 0.55em;
+    vertical-align: super;
+    opacity: 0.6;
+    font-family: 'Crimson Pro', sans-serif;
+    margin-left: 2px;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.18));
+  }
+
+  .tooltip.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .tooltip-inner {
+    background: white;
+    border: 1px solid var(--sepia-light);
+    border-radius: 6px;
+    overflow: hidden;
+    min-width: 160px;
+    text-align: center;
+  }
+
+  .tooltip-header {
+    background: var(--paper-dark);
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--sepia-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .tooltip-word {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 0.9rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tooltip-freq {
+    font-size: 0.72rem;
+    color: var(--sepia);
+    font-style: italic;
+  }
+
+  .tooltip-body {
+    padding: 0.75rem;
+  }
+
+  .outline-img {
+    width: 130px;
+    height: auto;
+    max-height: 110px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .no-outline-msg {
+    padding: 1rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--sepia);
+    font-style: italic;
+  }
+
+  .tooltip-label {
+    font-size: 0.68rem;
+    color: var(--sepia);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.4rem;
+    display: block;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--paper-dark);
+    font-size: 0.82rem;
+    color: var(--sepia);
+    flex-wrap: wrap;
+  }
+
+  .stat strong {
+    color: var(--accent);
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Demo notice */
+  .demo-notice {
+    background: rgba(181, 84, 26, 0.07);
+    border: 1px solid rgba(181, 84, 26, 0.25);
+    border-radius: 4px;
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+    color: var(--accent-bright);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Teeline Word Cloud</h1>
+    <p class="subtitle">Hover any word to reveal its Teeline outline</p>
+  </header>
+
+  <div class="demo-notice">
+    ✦ Live test — <strong>players, top, childhood, father</strong> and <strong>admit</strong> show your real Teeline images. All other words use illustrative SVG placeholders.
+  </div>
+
+  <div class="input-panel">
+    <label class="input-label" for="text-input">Paste your dictation text</label>
+    <textarea id="text-input" placeholder="Paste any text here and click Generate…
+
+Try the sample text to see the tool in action."></textarea>
+    <div class="controls">
+      <button class="btn-primary" onclick="generateCloud()">Generate Cloud</button>
+      <button class="btn-secondary" onclick="loadSample()">Load sample text</button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+      <span class="hint">Green words have Teeline outlines · Brown words do not</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--has-outline)"></div>
+      <span>Teeline outline available — hover to reveal</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--no-outline)"></div>
+      <span>No outline in database</span>
+    </div>
+  </div>
+
+  <div class="cloud-panel">
+    <div class="cloud-empty" id="cloud-empty">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <path d="M8 36 Q12 20 24 18 Q32 16 36 28" stroke="#c4a882" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M14 36 Q18 26 28 24 Q38 22 40 32" stroke="#c4a882" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        <ellipse cx="24" cy="35" rx="16" ry="4" fill="#c4a882" opacity="0.2"/>
+      </svg>
+      <p>Paste text above and click Generate</p>
+    </div>
+    <div id="word-cloud" style="display:none"></div>
+    <div class="stats-bar" id="stats-bar" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-inner">
+    <div class="tooltip-header">
+      <span class="tooltip-word" id="tt-word"></span>
+      <span class="tooltip-freq" id="tt-freq"></span>
+    </div>
+    <div class="tooltip-body" id="tt-body"></div>
+  </div>
+</div>
+
+<script>
+// ── Teeline outlines ──────────────────────────────────────────────────────────
+// Real images (from Google Drive) are marked with type:'img'
+// Demo SVG placeholders are inline SVG strings
+// In the full live version, all entries would be real Drive image URLs.
+
+function makeImg(id, word) {
+  return `<img class="outline-img" src="https://lh3.googleusercontent.com/d/${id}" alt="Teeline outline for ${word}" onerror="this.style.display='none';this.nextSibling.style.display='block'"><p class="no-outline-msg" style="display:none">Image failed to load</p>`;
+}
+
+const OUTLINES = {
+  // ── Real Teeline images from Google Drive ──
+  'players':   makeImg('1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL', 'players'),
+  'top':       makeImg('1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH', 'top'),
+  'childhood': makeImg('1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo', 'childhood'),
+  'father':    makeImg('1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un', 'father'),
+  'admit':     makeImg('1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8', 'admit'),
+
+  // ── Illustrative SVG placeholders (demo only) ──
+  'the': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 20 L30 60" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M15 30 L45 30" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M65 28 Q72 20 82 28 Q92 38 85 52 Q78 60 65 52" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M65 52 L90 52" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <text x="65" y="74" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">the</text>
+  </svg>`,
+
+  'and': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 55 Q35 20 65 20 Q90 20 95 45 Q98 60 80 62 Q60 64 50 50" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <text x="65" y="74" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">and</text>
+  </svg>`,
+
+  'to': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M35 20 L35 58" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M22 30 L48 30" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M68 40 Q78 28 90 40 Q100 52 90 62 Q80 70 68 62 Q60 56 68 40" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">to</text>
+  </svg>`,
+
+  'of': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M35 40 Q45 22 58 40 Q68 55 58 65 Q46 72 35 65 Q25 56 35 40" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M72 22 L72 62" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <path d="M62 42 L82 42" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">of</text>
+  </svg>`,
+
+  'a': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M55 22 L65 58" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M75 22 L65 58" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M58 40 L72 40" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <text x="65" y="72" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">a</text>
+  </svg>`,
+
+  'in': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M35 20 L35 60" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M35 60 Q55 55 75 60 L75 20" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <text x="55" y="74" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">in</text>
+  </svg>`,
+
+  'is': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 20 L40 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="78" cy="42" rx="14" ry="14" stroke="#2d5a27" stroke-width="2.2" fill="none"/>
+    <text x="65" y="74" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">is</text>
+  </svg>`,
+
+  'it': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M38 20 L38 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M25 32 L51 32" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <path d="M72 30 L72 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M58 20 L86 20" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="65" y="74" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">it</text>
+  </svg>`,
+
+  'that': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 30 L55 30" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M40 18 L40 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M70 62 Q80 18 100 25 Q108 45 95 58 Q82 66 70 62" stroke="#2d5a27" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <text x="65" y="75" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">that</text>
+  </svg>`,
+
+  'for': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M22 20 L22 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M22 20 L55 20" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M22 40 L48 40" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <path d="M72 42 Q82 28 95 42 Q105 55 95 65 Q83 72 72 65 Q63 57 72 42" stroke="#2d5a27" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">for</text>
+  </svg>`,
+
+  'with': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 22 Q30 50 40 30 Q50 12 60 40 Q70 58 80 35" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M80 35 L80 65" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M68 45 L92 45" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <text x="55" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">with</text>
+  </svg>`,
+
+  'have': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 22 L25 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M25 42 L55 42" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+    <path d="M55 22 L55 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M72 42 L88 22 L104 42 L88 62 Z" stroke="#2d5a27" stroke-width="2" fill="none" stroke-linejoin="round"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">have</text>
+  </svg>`,
+
+  'this': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 30 L55 30" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M40 20 L40 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M65 25 L65 60" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="92" cy="42" rx="14" ry="14" stroke="#2d5a27" stroke-width="2" fill="none"/>
+    <text x="65" y="75" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">this</text>
+  </svg>`,
+
+  'are': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 40 Q40 22 55 40 Q65 55 55 65 Q43 72 30 65 Q20 56 30 40" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M68 38 Q80 20 95 38 Q105 55 95 65 Q82 75 68 65 Q58 55 68 38" stroke="#2d5a27" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <text x="65" y="78" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">are</text>
+  </svg>`,
+
+  'not': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 22 L25 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M25 22 L58 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M58 22 L58 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M75 22 L95 22 L95 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M75 22 L75 62" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M85 30 L95 20" stroke="#2d5a27" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="65" y="75" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">not</text>
+  </svg>`,
+
+  'be': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 22 Q65 18 70 38 Q75 55 52 62 Q35 66 35 52 L35 22" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M35 42 L62 42" stroke="#2d5a27" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">be</text>
+  </svg>`,
+
+  'also': `<svg class="outline-img" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M25 30 Q35 22 45 30 Q55 38 45 48 Q38 54 30 48 L25 30" stroke="#2d5a27" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M60 22 L60 60" stroke="#2d5a27" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M75 55 Q85 38 95 45 Q102 52 95 62 Q88 70 78 62 Q72 56 75 55" stroke="#2d5a27" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <text x="65" y="76" font-size="9" fill="#8b6f47" text-anchor="middle" font-family="Georgia, serif" font-style="italic">also</text>
+  </svg>`,
+};
+
+// ── Stop words (very common words to optionally exclude) ─────────────────────
+const STOP_WORDS = new Set([]);
+
+// ── Utility: count word frequencies ─────────────────────────────────────────
+function countWords(text) {
+  const words = text.toLowerCase()
+    .replace(/[^a-z\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 1 && !STOP_WORDS.has(w));
+
+  const freq = {};
+  for (const w of words) {
+    freq[w] = (freq[w] || 0) + 1;
+  }
+  return freq;
+}
+
+// ── Generate word cloud ──────────────────────────────────────────────────────
+function generateCloud() {
+  const text = document.getElementById('text-input').value.trim();
+  if (!text) return;
+
+  const freq = countWords(text);
+  const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return;
+
+  const maxFreq = entries[0][1];
+  const minFreq = entries[entries.length - 1][1];
+
+  const cloud = document.getElementById('word-cloud');
+  const empty = document.getElementById('cloud-empty');
+  const stats = document.getElementById('stats-bar');
+
+  cloud.innerHTML = '';
+  cloud.style.display = 'flex';
+  empty.style.display = 'none';
+
+  const withOutline = entries.filter(([w]) => OUTLINES[w]).length;
+  const uniqueWords = entries.length;
+  const totalWords = Object.values(freq).reduce((a, b) => a + b, 0);
+
+  for (const [word, count] of entries) {
+    const hasOutline = !!OUTLINES[word];
+    const size = minFreq === maxFreq
+      ? 1.6
+      : 0.85 + ((count - minFreq) / (maxFreq - minFreq)) * 2.4;
+
+    const chip = document.createElement('span');
+    chip.className = `word-chip ${hasOutline ? 'has-outline' : 'no-outline'}`;
+    chip.style.fontSize = `${size}rem`;
+    chip.innerHTML = word + `<span class="freq-badge">${count}</span>`;
+
+    chip.addEventListener('mouseenter', (e) => showTooltip(e, word, count, hasOutline));
+    chip.addEventListener('mousemove', moveTooltip);
+    chip.addEventListener('mouseleave', hideTooltip);
+
+    cloud.appendChild(chip);
+  }
+
+  stats.innerHTML = `
+    <span class="stat">Total words: <strong>${totalWords}</strong></span>
+    <span class="stat">Unique words: <strong>${uniqueWords}</strong></span>
+    <span class="stat">With Teeline outlines: <strong>${withOutline}</strong> of ${uniqueWords}</span>
+  `;
+  stats.style.display = 'flex';
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────────────────
+let mouseX = 0, mouseY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function showTooltip(e, word, count, hasOutline) {
+  const tt = document.getElementById('tooltip');
+  document.getElementById('tt-word').textContent = word;
+  document.getElementById('tt-freq').textContent = `× ${count}`;
+
+  const body = document.getElementById('tt-body');
+  if (hasOutline) {
+    body.innerHTML = OUTLINES[word] + `<span class="tooltip-label">Teeline outline</span>`;
+  } else {
+    body.innerHTML = `<p class="no-outline-msg">No Teeline outline<br>in database</p>`;
+  }
+
+  positionTooltip();
+  tt.classList.add('visible');
+}
+
+function moveTooltip() { positionTooltip(); }
+
+function positionTooltip() {
+  const tt = document.getElementById('tooltip');
+  const pad = 14;
+  const tw = tt.offsetWidth || 180;
+  const th = tt.offsetHeight || 140;
+  let x = mouseX + pad;
+  let y = mouseY - th / 2;
+
+  if (x + tw > window.innerWidth - 10) x = mouseX - tw - pad;
+  if (y < 10) y = 10;
+  if (y + th > window.innerHeight - 10) y = window.innerHeight - th - 10;
+
+  tt.style.left = x + 'px';
+  tt.style.top = y + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').classList.remove('visible');
+}
+
+// ── Sample text ──────────────────────────────────────────────────────────────
+function loadSample() {
+  document.getElementById('text-input').value = `The players gathered at the top of the hill where they had spent their childhood. It was here that a father would admit to his children that he had not always been the best player in the team. The top players from his childhood were long gone but their father had taught them to admit when they were wrong. The players who had grown up together at the top of their game would never admit defeat. A father watching from the top of the stand felt pride in the players below.`;
+  generateCloud();
+}
+
+function clearAll() {
+  document.getElementById('text-input').value = '';
+  document.getElementById('word-cloud').style.display = 'none';
+  document.getElementById('word-cloud').innerHTML = '';
+  document.getElementById('cloud-empty').style.display = 'flex';
+  document.getElementById('stats-bar').style.display = 'none';
+}
+</script>
+</body>
+</html>

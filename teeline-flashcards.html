@@ -9,22 +9,22 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #f5f0e8;
+    --bg: #ffffff;
     --surface: #ffffff;
-    --surface2: #f9f5ee;
-    --border: #ddd4c0;
-    --accent: #5c3d1e;
-    --accent-light: #8b6f47;
-    --accent-dim: #c4a882;
-    --text: #1a1208;
-    --text-dim: #8b7355;
+    --surface2: #fdf5f5;
+    --border: #f0d0d0;
+    --accent: #d5181b;
+    --accent-light: #e84040;
+    --accent-dim: #f0a0a0;
+    --text: #1a0a0a;
+    --text-dim: #8a5555;
     --correct: #2d5a27;
     --correct-bg: #edf5eb;
     --correct-light: #3a7a32;
-    --wrong: #7c3a3a;
+    --wrong: #d5181b;
     --wrong-bg: #fdf0f0;
-    --wrong-light: #a04040;
-    --shadow: rgba(26,18,8,0.08);
+    --wrong-light: #a01010;
+    --shadow: rgba(213,24,27,0.08);
   }
 
   body {
@@ -45,7 +45,7 @@
     inset: 0;
     background-image: repeating-linear-gradient(
       0deg, transparent, transparent 27px,
-      rgba(139,111,71,0.06) 27px, rgba(139,111,71,0.06) 28px
+      rgba(213,24,27,0.03) 27px, rgba(213,24,27,0.03) 28px
     );
     pointer-events: none;
     z-index: 0;
@@ -68,7 +68,7 @@
     font-family: 'IM Fell English', Georgia, serif;
     font-size: clamp(1.8rem, 5vw, 2.6rem);
     font-weight: 400;
-    color: var(--gold);
+    color: var(--accent);
     letter-spacing: 0.04em;
     margin-bottom: 0.25rem;
   }
@@ -77,6 +77,53 @@
     font-size: 1rem;
     color: var(--text-dim);
     font-style: italic;
+  }
+
+  /* Mock selector */
+  .mock-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.6rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .mock-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .mock-select {
+    flex: 1;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 0.95rem;
+    color: var(--accent);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    outline: none;
+    min-width: 0;
+  }
+
+  .mock-select:focus {
+    border-color: var(--accent-light);
+  }
+
+  .mock-count {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   /* Mode selector */
@@ -513,6 +560,19 @@
     <p class="subtitle">Flashcards — test your knowledge both ways</p>
   </header>
 
+  <div class="mock-selector">
+    <label class="mock-label" for="mock-select">Practice set</label>
+    <select class="mock-select" id="mock-select" onchange="selectMock(this.value)">
+      <option value="All Words">All Words</option>
+      <option value="Fire Station Closures in Rural Communities">Fire Station Closures in Rural Communities</option>
+      <option value="Cancer Research UK Announce Death Rates">Cancer Research UK Announce Death Rates</option>
+      <option value="A Curious Sight at Charing Cross Station">A Curious Sight at Charing Cross Station</option>
+      <option value="Growing Your Own">Growing Your Own</option>
+      <option value="The Art of Conversation">The Art of Conversation</option>
+    </select>
+    <span class="mock-count" id="mock-count">6 words</span>
+  </div>
+
   <div class="mode-bar">
     <button class="mode-btn active" id="mode-read" onclick="setMode('read')">
       Teeline → English
@@ -586,17 +646,43 @@
 
 <script>
 // ── Database ──────────────────────────────────────────────────────────────────
-// Add new words here as your Drive database grows.
-// Format: { word: 'english', id: 'GOOGLE_DRIVE_FILE_ID' }
+// Words are organised by mock. Add new mocks and words here as you build out.
+// A word can appear in multiple mocks — just reference the same Drive ID again.
+// 'All Words' is always available and contains every unique card.
 
-const CARDS = [
-  { word: 'players',   id: '1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL' },
-  { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
-  { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
-  { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
-  { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
-  { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK'  },
-];
+const MOCKS = {
+  'All Words': [
+    { word: 'players',   id: '1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL' },
+    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
+    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
+    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
+    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
+    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
+  ],
+  'Fire Station Closures in Rural Communities': [
+    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
+    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
+  ],
+  'Cancer Research UK Announce Death Rates': [
+    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
+    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
+  ],
+  'A Curious Sight at Charing Cross Station': [
+    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
+    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
+  ],
+  'Growing Your Own': [
+    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
+    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
+  ],
+  'The Art of Conversation': [
+    { word: 'players',   id: '1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL' },
+    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
+    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
+  ],
+};
+
+let currentMock = 'All Words';
 
 function imgUrl(id) {
   return `https://lh3.googleusercontent.com/d/${id}`;
@@ -619,6 +705,15 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// ── Mock selector ─────────────────────────────────────────────────────────────
+function selectMock(mockName) {
+  currentMock = mockName;
+  const count = MOCKS[mockName].length;
+  document.getElementById('mock-count').textContent =
+    `${count} word${count !== 1 ? 's' : ''}`;
+  restart();
 }
 
 // ── Mode ──────────────────────────────────────────────────────────────────────
@@ -780,7 +875,7 @@ function showComplete() {
 
 // ── Restart ───────────────────────────────────────────────────────────────────
 function restart() {
-  deck = shuffle(CARDS);
+  deck = shuffle(MOCKS[currentMock]);
   current = 0;
   correct = 0;
   wrong = 0;
@@ -818,6 +913,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('mock-count').textContent =
+  `${MOCKS['All Words'].length} words`;
 restart();
 </script>
 </body>

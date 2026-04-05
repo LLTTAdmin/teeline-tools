@@ -3,26 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teeline Flashcards</title>
+<title>Let's Love Teeline Together – Flashcards</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0e0c0a;
-    --surface: #1a1612;
-    --surface2: #242018;
-    --border: #3a3228;
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --gold-dim: #6b5a2a;
-    --text: #f0e8d8;
-    --text-dim: #8a7a62;
-    --correct: #4a7c59;
-    --correct-light: #7ab893;
+    --bg: #f5f0e8;
+    --surface: #ffffff;
+    --surface2: #f9f5ee;
+    --border: #ddd4c0;
+    --accent: #5c3d1e;
+    --accent-light: #8b6f47;
+    --accent-dim: #c4a882;
+    --text: #1a1208;
+    --text-dim: #8b7355;
+    --correct: #2d5a27;
+    --correct-bg: #edf5eb;
+    --correct-light: #3a7a32;
     --wrong: #7c3a3a;
-    --wrong-light: #c47a7a;
-    --shadow: rgba(0,0,0,0.5);
+    --wrong-bg: #fdf0f0;
+    --wrong-light: #a04040;
+    --shadow: rgba(26,18,8,0.08);
   }
 
   body {
@@ -37,12 +39,14 @@
     position: relative;
   }
 
-  /* Subtle vignette */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.4) 100%);
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 27px,
+      rgba(139,111,71,0.06) 27px, rgba(139,111,71,0.06) 28px
+    );
     pointer-events: none;
     z-index: 0;
   }
@@ -100,8 +104,8 @@
   }
 
   .mode-btn.active {
-    background: var(--gold-dim);
-    color: var(--gold-light);
+    background: var(--accent);
+    color: white;
   }
 
   .mode-btn:hover:not(.active) {
@@ -114,7 +118,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     padding: 0.6rem 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -136,7 +140,7 @@
 
   .score-correct strong { color: var(--correct-light); }
   .score-wrong strong { color: var(--wrong-light); }
-  .score-total strong { color: var(--gold); }
+  .score-total strong { color: var(--accent); }
 
   .progress-bar {
     width: 100%;
@@ -149,7 +153,7 @@
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--correct), var(--gold));
+    background: linear-gradient(90deg, var(--correct), var(--accent));
     border-radius: 2px;
     transition: width 0.4s ease;
     width: 0%;
@@ -172,17 +176,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    box-shadow: 0 8px 32px var(--shadow);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 8px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
-    pointer-events: none;
+    box-shadow: 0 4px 20px var(--shadow);
   }
 
   .card-label {
@@ -192,7 +186,7 @@
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: var(--gold-dim);
+    color: var(--accent-dim);
   }
 
   .card-counter {
@@ -208,7 +202,6 @@
     max-width: 220px;
     max-height: 160px;
     object-fit: contain;
-    filter: brightness(0.9) contrast(1.1);
   }
 
   .img-error {
@@ -221,7 +214,7 @@
   .english-word {
     font-family: 'IM Fell English', Georgia, serif;
     font-size: clamp(2rem, 8vw, 3.5rem);
-    color: var(--text);
+    color: var(--accent);
     letter-spacing: 0.03em;
     text-align: center;
   }
@@ -234,7 +227,7 @@
 
   .answer-input {
     width: 100%;
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.75rem 1rem;
@@ -248,18 +241,18 @@
   }
 
   .answer-input:focus {
-    border-color: var(--gold-dim);
+    border-color: var(--accent-light);
   }
 
   .answer-input.correct {
     border-color: var(--correct);
-    background: rgba(74, 124, 89, 0.1);
+    background: var(--correct-bg);
     color: var(--correct-light);
   }
 
   .answer-input.wrong {
     border-color: var(--wrong);
-    background: rgba(124, 58, 58, 0.1);
+    background: var(--wrong-bg);
     color: var(--wrong-light);
   }
 
@@ -288,55 +281,55 @@
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.18s;
-    background: var(--surface2);
+    background: var(--surface);
     color: var(--text-dim);
   }
 
   .btn-reveal {
-    background: var(--gold-dim);
-    border-color: var(--gold-dim);
-    color: var(--gold-light);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
     font-size: 1.05rem;
   }
 
   .btn-reveal:hover {
-    background: #7a6830;
-    color: var(--gold-light);
+    background: var(--accent-light);
+    border-color: var(--accent-light);
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(201,168,76,0.2);
+    box-shadow: 0 4px 12px var(--shadow);
   }
 
   .btn-correct {
-    background: rgba(74,124,89,0.2);
+    background: var(--correct-bg);
     border-color: var(--correct);
     color: var(--correct-light);
   }
 
   .btn-correct:hover {
-    background: rgba(74,124,89,0.35);
+    background: #d8edda;
     transform: translateY(-1px);
   }
 
   .btn-wrong {
-    background: rgba(124,58,58,0.2);
+    background: var(--wrong-bg);
     border-color: var(--wrong);
     color: var(--wrong-light);
   }
 
   .btn-wrong:hover {
-    background: rgba(124,58,58,0.35);
+    background: #fce0e0;
     transform: translateY(-1px);
   }
 
   .btn-next {
     background: var(--surface2);
-    border-color: var(--gold-dim);
-    color: var(--gold);
+    border-color: var(--accent-dim);
+    color: var(--accent);
   }
 
   .btn-next:hover {
-    background: var(--gold-dim);
-    color: var(--gold-light);
+    background: var(--accent-dim);
+    color: white;
     transform: translateY(-1px);
   }
 
@@ -355,7 +348,7 @@
   }
 
   .revealed-answer.correct-reveal {
-    background: rgba(74,124,89,0.15);
+    background: var(--correct-bg);
     border: 1px solid var(--correct);
     color: var(--correct-light);
   }
@@ -373,6 +366,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
+    box-shadow: 0 4px 20px var(--shadow);
     display: none;
   }
 
@@ -381,7 +375,7 @@
   .final-score {
     font-family: 'IM Fell English', Georgia, serif;
     font-size: 4rem;
-    color: var(--gold);
+    color: var(--accent);
     line-height: 1;
     margin: 1rem 0;
   }
@@ -397,23 +391,23 @@
     padding: 0.75rem 2.5rem;
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 1.1rem;
-    background: var(--gold-dim);
-    border: 1px solid var(--gold-dim);
+    background: var(--accent);
+    border: 1px solid var(--accent);
     border-radius: 4px;
-    color: var(--gold-light);
+    color: white;
     cursor: pointer;
     letter-spacing: 0.05em;
     transition: all 0.2s;
   }
 
   .btn-restart:hover {
-    background: #7a6830;
+    background: var(--accent-light);
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(201,168,76,0.2);
+    box-shadow: 0 4px 12px var(--shadow);
   }
 
   .ornament {
-    color: var(--gold-dim);
+    color: var(--accent-dim);
     font-size: 1.2rem;
     letter-spacing: 0.5em;
     margin: 1rem 0;
@@ -424,8 +418,8 @@
 
 <div class="container">
   <header>
-    <h1>Teeline Flashcards</h1>
-    <p class="subtitle">Test your knowledge — both ways</p>
+    <h1>Let's Love Teeline Together</h1>
+    <p class="subtitle">Flashcards — test your knowledge both ways</p>
   </header>
 
   <div class="mode-bar">

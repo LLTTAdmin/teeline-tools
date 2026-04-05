@@ -237,9 +237,9 @@
   #word-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 0.75rem;
-    align-items: center;
-    justify-content: center;
+    gap: 0.25rem 0.4rem;
+    align-items: baseline;
+    justify-content: flex-start;
     padding: 1rem 0;
   }
 
@@ -389,7 +389,36 @@
     font-family: 'Playfair Display', serif;
   }
 
-  /* Demo notice */
+  .btn-toggle {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 0.88rem;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: 1px solid var(--sepia-light);
+    background: transparent;
+    color: var(--sepia);
+    letter-spacing: 0.02em;
+  }
+
+  .btn-toggle.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-toggle:hover:not(.active) {
+    background: var(--paper-dark);
+  }
+
+  .mode-label {
+    font-size: 0.75rem;
+    color: var(--sepia-light);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
   .demo-notice {
     background: rgba(181, 84, 26, 0.07);
     border: 1px solid rgba(181, 84, 26, 0.25);
@@ -601,34 +630,23 @@ const OUTLINES = {
   </svg>`,
 };
 
-// ── Stop words (very common words to optionally exclude) ─────────────────────
+// ── Stop words ────────────────────────────────────────────────────────────────
 const STOP_WORDS = new Set([]);
-
-// ── Utility: count word frequencies ─────────────────────────────────────────
-function countWords(text) {
-  const words = text.toLowerCase()
-    .replace(/[^a-z\s'-]/g, ' ')
-    .split(/\s+/)
-    .filter(w => w.length > 1 && !STOP_WORDS.has(w));
-
-  const freq = {};
-  for (const w of words) {
-    freq[w] = (freq[w] || 0) + 1;
-  }
-  return freq;
-}
 
 // ── Generate word cloud ──────────────────────────────────────────────────────
 function generateCloud() {
   const text = document.getElementById('text-input').value.trim();
   if (!text) return;
 
-  const freq = countWords(text);
-  const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) return;
+  // Split into tokens preserving every word including repeats
+  const tokens = text.toLowerCase()
+    .replace(/[^a-z\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 0);
 
-  const maxFreq = entries[0][1];
-  const minFreq = entries[entries.length - 1][1];
+  // Count frequencies for the tooltip
+  const freq = {};
+  for (const w of tokens) freq[w] = (freq[w] || 0) + 1;
 
   const cloud = document.getElementById('word-cloud');
   const empty = document.getElementById('cloud-empty');
@@ -638,20 +656,16 @@ function generateCloud() {
   cloud.style.display = 'flex';
   empty.style.display = 'none';
 
-  const withOutline = entries.filter(([w]) => OUTLINES[w]).length;
-  const uniqueWords = entries.length;
-  const totalWords = Object.values(freq).reduce((a, b) => a + b, 0);
+  const uniqueWithOutline = new Set(tokens.filter(w => OUTLINES[w])).size;
+  const uniqueWords = new Set(tokens).size;
 
-  for (const [word, count] of entries) {
+  for (const word of tokens) {
+    const count = freq[word];
     const hasOutline = !!OUTLINES[word];
-    const size = minFreq === maxFreq
-      ? 1.6
-      : 0.85 + ((count - minFreq) / (maxFreq - minFreq)) * 2.4;
 
     const chip = document.createElement('span');
     chip.className = `word-chip ${hasOutline ? 'has-outline' : 'no-outline'}`;
-    chip.style.fontSize = `${size}rem`;
-    chip.innerHTML = word + `<span class="freq-badge">${count}</span>`;
+    chip.textContent = word;
 
     chip.addEventListener('mouseenter', (e) => showTooltip(e, word, count, hasOutline));
     chip.addEventListener('mousemove', moveTooltip);
@@ -661,9 +675,9 @@ function generateCloud() {
   }
 
   stats.innerHTML = `
-    <span class="stat">Total words: <strong>${totalWords}</strong></span>
+    <span class="stat">Total words: <strong>${tokens.length}</strong></span>
     <span class="stat">Unique words: <strong>${uniqueWords}</strong></span>
-    <span class="stat">With Teeline outlines: <strong>${withOutline}</strong> of ${uniqueWords}</span>
+    <span class="stat">With Teeline outlines: <strong>${uniqueWithOutline}</strong> of ${uniqueWords}</span>
   `;
   stats.style.display = 'flex';
 }

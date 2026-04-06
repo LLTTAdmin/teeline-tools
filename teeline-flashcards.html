@@ -467,7 +467,7 @@
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 1.5rem;
-    padding: 0.6rem 1rem;
+    padding: 0.75rem 1rem;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -593,14 +593,6 @@
 
   <div style="height:1.5rem"></div>
 
-  <!-- Keyboard shortcuts -->
-  <div class="shortcuts-bar">
-    <div class="shortcut"><kbd>Space</kbd> or <kbd>Enter</kbd> Reveal</div>
-    <div class="shortcut"><kbd>→</kbd> Got it</div>
-    <div class="shortcut"><kbd>←</kbd> Missed it</div>
-    <div class="shortcut"><kbd>1</kbd> Teeline→English &nbsp; <kbd>2</kbd> English→Teeline</div>
-  </div>
-
   <!-- Main card -->
   <div class="card-wrap" id="card-wrap">
     <div class="card" id="main-card">
@@ -630,6 +622,15 @@
       <button class="btn btn-correct" onclick="mark(true)">✓ Got it</button>
       <button class="btn btn-wrong" onclick="mark(false)">✗ Missed it</button>
     </div>
+  </div>
+
+  <!-- Keyboard shortcuts -->
+  <div class="shortcuts-bar">
+    <div style="width:100%;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-dim);margin-bottom:0.4rem;">Keyboard Shortcuts</div>
+    <div class="shortcut"><kbd>Space</kbd> or <kbd>Enter</kbd> Reveal</div>
+    <div class="shortcut"><kbd>→</kbd> Got it</div>
+    <div class="shortcut"><kbd>←</kbd> Missed it</div>
+    <div class="shortcut"><kbd>1</kbd> Teeline→English &nbsp; <kbd>2</kbd> English→Teeline</div>
   </div>
 
   <!-- Deck complete -->

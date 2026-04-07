@@ -781,25 +781,32 @@ function reveal() {
     const correct_answer = card.word.toLowerCase();
 
     if (typed && typed === correct_answer) {
+      // Typed correctly — auto-mark correct
       input.className = 'answer-input correct';
       revealedEl.className = 'revealed-answer correct-reveal show';
       revealedEl.textContent = '✓ Correct!';
-      // Auto-mark as correct
+      btnReveal.style.display = 'none';
       setTimeout(() => mark(true), 800);
       return;
     } else if (typed && typed !== correct_answer) {
+      // Typed something wrong — show answer and auto-mark wrong
       input.className = 'answer-input wrong';
       revealedEl.className = 'revealed-answer show';
-      revealedEl.style.background = 'rgba(124,58,58,0.15)';
+      revealedEl.style.background = 'var(--wrong-bg)';
       revealedEl.style.border = '1px solid var(--wrong)';
       revealedEl.style.color = 'var(--wrong-light)';
-      revealedEl.textContent = `Answer: ${card.word}`;
+      revealedEl.textContent = `✗ Answer: ${card.word}`;
+      btnReveal.style.display = 'none';
+      btnMark.style.display = 'none';
+      setTimeout(() => mark(false), 1200);
+      return;
     } else {
+      // Nothing typed — show answer and let them self-mark
       revealedEl.className = 'revealed-answer neutral-reveal show';
       revealedEl.textContent = `Answer: ${card.word}`;
     }
   } else {
-    // Write mode — show the Teeline image
+    // Write mode — show the Teeline image, always self-mark
     revealedEl.className = 'revealed-answer neutral-reveal show';
     revealedEl.style.background = 'transparent';
     revealedEl.style.border = 'none';

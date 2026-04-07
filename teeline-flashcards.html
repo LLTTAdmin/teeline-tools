@@ -647,46 +647,48 @@
 
 <script>
 // ── Database ──────────────────────────────────────────────────────────────────
-// Words are organised by mock. Add new mocks and words here as you build out.
-// A word can appear in multiple mocks — just reference the same Drive ID again.
+// Words are organised by mock. The 'file' property is the exact filename
+// as uploaded to the images folder on GitHub.
 // 'All Words' is always available and contains every unique card.
+
+const BASE_URL = 'https://llttadmin.github.io/teeline-tools/images/';
 
 const MOCKS = {
   'All Words': [
-    { word: 'players',   id: '1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL' },
-    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
-    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
-    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
-    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
-    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
+    { word: 'players',   file: 'players.jpg' },
+    { word: 'top',       file: 'top.jpg' },
+    { word: 'childhood', file: 'childhood.jpg' },
+    { word: 'father',    file: 'father.jpg' },
+    { word: 'admit',     file: 'admit.jpg' },
+    { word: 'the',       file: 'the.jpeg' },
   ],
   'Fire Station Closures in Rural Communities': [
-    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
-    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
+    { word: 'the',       file: 'the.jpeg' },
+    { word: 'top',       file: 'top.jpg' },
   ],
   'Cancer Research UK Announce Death Rates': [
-    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
-    { word: 'the',       id: '1omL9NBkZO3bbE00v9WTaKGCwzPBO3hpK' },
+    { word: 'admit',     file: 'admit.jpg' },
+    { word: 'the',       file: 'the.jpeg' },
   ],
   'A Curious Sight at Charing Cross Station': [
-    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
-    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
+    { word: 'father',    file: 'father.jpg' },
+    { word: 'childhood', file: 'childhood.jpg' },
   ],
   'Growing Your Own': [
-    { word: 'top',       id: '1rmjIPa5enJWkquIo5ox0aZ5fJ3tbUrPH' },
-    { word: 'admit',     id: '1abFnoZtzl5Pb2CXcYvil4LkxoWSFN2U8' },
+    { word: 'top',       file: 'top.jpg' },
+    { word: 'admit',     file: 'admit.jpg' },
   ],
   'The Art of Conversation': [
-    { word: 'players',   id: '1BhQah_QjXbiDckp4k8g5GXHDePcRjaKL' },
-    { word: 'father',    id: '1iOFDdG_dw6NOqzhq4gPu9gbFP4hlL0Un' },
-    { word: 'childhood', id: '1LrT_V9e0wmouZgPNMxiMz1fzRYZCENSo' },
+    { word: 'players',   file: 'players.jpg' },
+    { word: 'father',    file: 'father.jpg' },
+    { word: 'childhood', file: 'childhood.jpg' },
   ],
 };
 
 let currentMock = 'All Words';
 
-function imgUrl(id) {
-  return `https://lh3.googleusercontent.com/d/${id}`;
+function imgUrl(file) {
+  return BASE_URL + file;
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -752,7 +754,7 @@ function renderCard() {
     hint.textContent = 'Type the English word, or click Reveal';
     input.placeholder = 'Your answer…';
     input.style.display = 'block';
-    content.innerHTML = `<img class="teeline-img" src="${imgUrl(card.id)}" alt="Teeline outline"
+    content.innerHTML = `<img class="teeline-img" src="${imgUrl(card.file)}" alt="Teeline outline"
       onerror="this.outerHTML='<p class=\\'img-error\\'>Image not available</p>'">`;
   } else {
     // Show English word, student recalls Teeline outline
@@ -801,7 +803,7 @@ function reveal() {
     revealedEl.className = 'revealed-answer neutral-reveal show';
     revealedEl.style.background = 'transparent';
     revealedEl.style.border = 'none';
-    revealedEl.innerHTML = `<img class="teeline-img" src="${imgUrl(card.id)}" alt="Teeline outline for ${card.word}"
+    revealedEl.innerHTML = `<img class="teeline-img" src="${imgUrl(card.file)}" alt="Teeline outline for ${card.word}"
       onerror="this.outerHTML='<p class=\\'img-error\\'>Image not available</p>'">`;
   }
 
@@ -862,7 +864,7 @@ function showComplete() {
   } else {
     const cards = missedWords.map(card => `
       <div class="missed-card">
-        <img src="${imgUrl(card.id)}" alt="${card.word}"
+        <img src="${imgUrl(card.file)}" alt="${card.word}"
           onerror="this.style.display='none'">
         <span class="missed-word">${card.word}</span>
       </div>
